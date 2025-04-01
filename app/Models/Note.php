@@ -30,6 +30,7 @@ class Note extends Model
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
         )
     ");
+    
 }
 
 }
