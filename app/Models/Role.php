@@ -1,10 +1,18 @@
 <?php
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
+
 {
+
+    use HasFactory;
+    // Explicitly define the table name
+    protected $table = 'roles';  
+    
     // realationship with users model 
     public function users(){
         return $this->hasMany(User::class);
@@ -21,7 +29,7 @@ class Role extends Model
             )
         ");
 
-        // 1 = admin and 2 user 
+        // 1 = admin and 2 user r
     }
 }
 

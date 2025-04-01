@@ -29,7 +29,7 @@ class AuthController extends Controller
 
         $defaultRole = Role::where('name' , 'User')->first();
         if (!$defaultRole) {
-            return response()->json(['error' => 'User role not found. Run Role::insert() first.'], 500);
+            return response()->json(['error' => 'User role not found.'], 500);
         }
       
     
@@ -41,6 +41,13 @@ class AuthController extends Controller
         'role_id' => $defaultRole->id, // Assign default role
 
     ]);
+
+// manually updating the admin role
+    $adminRole = Role::where('name', 'Admin')->first();
+    if ($adminRole) {
+        $user->role_id = $adminRole->id; // Update to Admin role
+        $user->save(); // Save changes
+    }
 
     $token = auth('api')->login($user);
     // / Assign role to user (e.g., 'user' role)

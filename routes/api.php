@@ -40,7 +40,7 @@ Route::group(['prefix' => 'auth'], function () {
 
 
 Route::middleware(['auth:api'])->group(function () {
-    Route::get('/notes', [NoteController::class, 'index']); // List notes
+    Route::get('/notes/{id?}/{date?}', [NoteController::class, 'index']); // List notes
     Route::get('/notes/{id}', [NoteController::class, 'show']); // View specific note
     Route::post('/notes/create', [NoteController::class, 'createForSelf']); // Users create their own note
 
@@ -49,5 +49,5 @@ Route::middleware(['auth:api'])->group(function () {
 
 
 Route::middleware(['auth:api', 'role:Admin'])->group(function () {
-    Route::post('/notes/create-for-user/{user_id}', [NoteController::class, 'createForUser']); // Admin creates note for any user
+    Route::post('/notes/create-for-user', [NoteController::class, 'createForUser']); // Admin creates note for any user
 });

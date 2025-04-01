@@ -14,17 +14,26 @@ use Closure;
             return response()->json(['error'=> 'Unauthorized'], 401);
         }
     
-        $user = Auth::guard('api')->user();
+        // $user = Auth::guard('api')->user();
 
-      if($user->role->name !== $role){
-        return response()->json(['error' => 'Forbidden'], 403);
-      }
+        $admin = Auth::user();
+
+      
+    //Check if the authenticated user is an admin
+  //   if (!$user || $user->role->name !== $role) { {
+  //     return response()->json(['error' => 'Unauthorized - Admins Can create only'], 403);
+  // }
+
+
+  if ($admin->role->name!== 'admin') {
+    return response()->json(['error' => 'Unauthorized - Admins Can create only']);
+}
       return $next($request);
     }
 
 
+  
   }
-
 
 
 
