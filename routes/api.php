@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\RoleController;
 
 
 /*
@@ -35,13 +36,15 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 // FOR LOGIN ADN REGIS
 Route::group(['prefix' => 'auth'], function () {
     Route::post('/register', [AuthController::class, 'register']); // Register
-    Route::post('/login', [AuthController::class, 'login']);       // Login
+    Route::post('/login', [AuthController::class, 'login']);   
+    // Route::post('/users/{id}/assign-role', [RoleController::class, 'assignRole']);
+    // Login
 });
 
 
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/notes', [NoteController::class, 'index']); // List notes for admins can specify date and user_id in the params
-    
+
     Route::get('/notes/{id}', [NoteController::class, 'show']); // View specific note for users  
     Route::post('/notes/create', [NoteController::class, 'createForSelf']); // Users create their own note
 
