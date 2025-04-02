@@ -89,50 +89,48 @@ class NoteController extends Controller
     }
 
 
-    public function index(Request $request)
-    {
-        $user = Auth::user();
+  
 
-        // default mai aaj ka date jayega 
+public function index(Request $request)
+{
+    $user = Auth::user();
 
-        $date = $request->input('date', now()->toDateString());
-        // $utcDate = Carbon::parse($date, 'Asia/Kolkata')->setTimezone('UTC')->toDateString();
+    // Get the requested date or default to today
+    $date = $request->input('date', Carbon::now()->toDateString());
 
-        $startDay = date('Y-m-d H:i:s' , strtotime($date . '00:00:00 UTC'));
-        $endDay = date('Y-m-d H:i:s' , strtotime($date . '23:59:59 UTC'));
+    // Convert the date into a start and end range in UTC
+    $startDay = Carbon::parse($date, 'Asia/Kolkata')->startOfDay()->setTimezone('UTC')->toDateTimeString();
+    $endDay = Carbon::parse($date, 'Asia/Kolkata')->endOfDay()->setTimezone('UTC')->toDateTimeString();
 
+    // Get user_id from the request (admins only)
+    $user_id = $request->input('user_id');
 
-        // to  get the date between 
-        // defaultt user id
-        $user_id = $request->input('user_id', $user->id);
+    if ($user->role->name === 'admin') {
+        // Admin fetches all notes for today by default
+        $query = Note::whereBetween('created_at', [$startDay, $endDay]);
 
-        if ($user->role->name === 'admin') {
-            $query = Note::whereBetween('created_at', [$startDay , $endDay]);
-                // ->where('user_id', $user_id) // Filter by user_id
-         
-        
-        if($user_id){
-        $query = Note::where('user_id', $user_id);
-                  }
-
-                  $notes=$query->get();
-                }
-         else {
-            // Regular users can only fetch their own notes for the same day
-            $notes = Note::whereBetween('created_at',  [$startDay , $endDay])
-                ->where('user_id', $user->id) // Only fetch their own notes
-                ->get();
+        // If user_id is provided, filter for that user
+        if (!empty($user_id)) {
+            $query->where('user_id', $user_id);
         }
 
-
-
-        return response()->json($notes);
+        $notes = $query->get();
+    } else {
+        // Regular users can only fetch their own notes for today
+        $notes = Note::where('user_id', $user->id)
+            ->whereBetween('created_at', [$startDay, $endDay])
+            ->get();
     }
+
+    return response()->json($notes);
+}
 
     // 🔹 View a specific note
     public function show($id)
     {
         $user = Auth::user();
+
+
         $note = Note::find($id);
 
         if (!$note) {
@@ -142,9 +140,9 @@ class NoteController extends Controller
         if ($user->role->name !== 'admin' && $note->user_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-        //conversion of timstamp
-    // $note->created_at = Carbon::parse($note->created_at)->setTimezone('Asia/Kolkata')->toDateTimeString();
-    // $note->updated_at = Carbon::parse($note->updated_at)->setTimezone('Asia/Kolkata')->toDateTimeString();
+        // conversion of timstamp
+    $note->created_at = Carbon::parse($note->created_at)->setTimezone('Asia/Kolkata')->toDateTimeString();
+    $note->updated_at = Carbon::parse($note->updated_at)->setTimezone('Asia/Kolkata')->toDateTimeString();
         return response()->json($note);
     }
 

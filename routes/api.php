@@ -40,8 +40,9 @@ Route::group(['prefix' => 'auth'], function () {
 
 
 Route::middleware(['auth:api'])->group(function () {
-    Route::get('/notes/{id?}/{date?}', [NoteController::class, 'index']); // List notes
-    Route::get('/notes/{id}', [NoteController::class, 'show']); // View specific note
+    Route::get('/notes', [NoteController::class, 'index']); // List notes for admins can specify date and user_id in the params
+    
+    Route::get('/notes/{id}', [NoteController::class, 'show']); // View specific note for users  
     Route::post('/notes/create', [NoteController::class, 'createForSelf']); // Users create their own note
 
     Route::delete('/notes/{id}', [NoteController::class, 'destroy']); // Delete a note
