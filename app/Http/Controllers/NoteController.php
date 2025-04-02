@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Routing\Controller;
 use Carbon\Carbon;
 use PhpParser\Node\Stmt\ElseIf_;
+use Illuminate\Support\Facades\Cache;
 
 
 
@@ -88,38 +89,50 @@ class NoteController extends Controller
         }
     }
 
-
-  
-
 public function index(Request $request)
 {
     $user = Auth::user();
-
-    // Get the requested date or default to today
     $date = $request->input('date', Carbon::now()->toDateString());
+    $isToday = $date === Carbon::now()->toDateString();
 
-    // Convert the date into a start and end range in UTC
     $startDay = Carbon::parse($date, 'Asia/Kolkata')->startOfDay()->setTimezone('UTC')->toDateTimeString();
     $endDay = Carbon::parse($date, 'Asia/Kolkata')->endOfDay()->setTimezone('UTC')->toDateTimeString();
 
-    // Get user_id from the request (admins only)
-    $user_id = $request->input('user_id');
+    $user_id = $request->input('user_id'); // For filtering specific user’s notes (admin only)
 
-    if ($user->role->name === 'admin') {
-        // Admin fetches all notes for today by default
+    
+    $cacheKey = "notes_{$user_id}_{$date}";
+
+    if ($isToday) {
+        
         $query = Note::whereBetween('created_at', [$startDay, $endDay]);
 
-        // If user_id is provided, filter for that user
-        if (!empty($user_id)) {
-            $query->where('user_id', $user_id);
+        if ($user->role->name !== 'admin') {
+         
+            $query->where('user_id', $user->id);
+        } else {
+            //  Admin should see all  notes unless a specific user_id is provided
+            if (!empty($user_id)) {
+                $query->where('user_id', $user_id);
+            }
         }
 
         $notes = $query->get();
     } else {
-        // Regular users can only fetch their own notes for today
-        $notes = Note::where('user_id', $user->id)
-            ->whereBetween('created_at', [$startDay, $endDay])
-            ->get();
+        //  notes ka time limit is being set to 24 hrs only 
+        $notes = Cache::remember($cacheKey, 86400, function () use ($startDay, $endDay, $user, $user_id) {
+            $query = Note::whereBetween('created_at', [$startDay, $endDay]);
+
+            if ($user->role->name !== 'admin') {
+                $query->where('user_id', $user->id);
+            } else {
+                if (!empty($user_id)) {
+                    $query->where('user_id', $user_id);
+                }
+            }
+
+            return $query->get();
+        });
     }
 
     return response()->json($notes);
